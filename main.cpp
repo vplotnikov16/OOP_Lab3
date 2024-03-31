@@ -62,6 +62,23 @@ public:
             return current->data;
         }
     }
+
+    void print(bool reversed = false) const {
+        if (!reversed) {
+            ListNode<Type> *current = head;
+            while (current != nullptr) {
+                std::cout << current->data << " ";
+                current = current->next;
+            }
+        } else {
+            ListNode<Type> *current = tail;
+            while (current != nullptr) {
+                cout << current->data << " ";
+                current = current->prev;
+            }
+        }
+        std::cout << std::endl;
+    }
 };
 
 int main() {
@@ -71,6 +88,8 @@ int main() {
     list.push_back(-9);
     cout << list.getSize() << endl;
     list.push_back(11);
-    cout << list[3];
+    cout << list[3] << endl;
+    list.print();
+    list.print(true);
     return 0;
 }
