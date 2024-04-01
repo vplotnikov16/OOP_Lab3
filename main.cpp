@@ -25,6 +25,7 @@ private:
 
     ListNode<Type> *getPNode(const int index) {
         int i = 0;
+        if (index < 0 || index >= size) throw std::out_of_range("Index out of range");
         ListNode<Type> *current = nullptr;
         if (index > size / 2) {
             current = tail;
@@ -43,11 +44,19 @@ private:
     }
 
 public:
-    List<Type>() {
+    List() {
         head = nullptr;
         tail = nullptr;
         size = 0;
     };
+
+    ~List() {
+        while (head != nullptr) {
+            ListNode<Type> *temp = head;
+            head = head->next;
+            delete temp;
+        }
+    }
 
     int getSize() {
         return size;
@@ -75,7 +84,33 @@ public:
         size++;
     }
 
-    Type &operator[](const int index) {
+    void pop_back() {
+        if (tail == nullptr) return;
+
+        ListNode<Type> *temp = tail;
+        tail = tail->prev;
+        if (tail != nullptr)
+            tail->next = nullptr;
+        else
+            head = nullptr;
+        delete temp;
+        size--;
+    }
+
+    void pop_front() {
+        if (head == nullptr) return;
+
+        ListNode<Type> *temp = head;
+        head = head->next;
+        if (head != nullptr)
+            head->prev = nullptr;
+        else
+            tail = nullptr;
+        delete temp;
+        size--;
+    }
+
+    const Type &operator[](const int index) {
         return getObject(index);
     }
 
@@ -138,14 +173,5 @@ public:
 };
 
 int main() {
-    List<int> list;
-    list.push_back(0);
-    list.push_front(4);
-    list.push_back(-9);
-    list.push_back(11);
-    cout << list.getObject(3, true) << endl;
-    list.print();
-    list.insert(2, 10);
-    list.print();
     return 0;
 }
