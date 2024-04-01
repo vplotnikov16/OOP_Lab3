@@ -22,6 +22,26 @@ private:
     ListNode<Type> *head;
     ListNode<Type> *tail;
     int size;
+
+    ListNode<Type> *getPNode(const int index) {
+        int i = 0;
+        ListNode<Type> *current = nullptr;
+        if (index > size / 2) {
+            current = tail;
+            while (i != size - index - 1) {
+                current = current->prev;
+                i++;
+            }
+        } else {
+            current = head;
+            while (i != index) {
+                current = current->next;
+                i++;
+            }
+        }
+        return current;
+    }
+
 public:
     List<Type>() {
         head = nullptr;
@@ -44,23 +64,59 @@ public:
         size++;
     }
 
-    Type &operator[](const int index) {
-        int i = 0;
-        if (index > size / 2) {
-            ListNode<Type> *current = tail;
-            while (i != size - index - 1) {
-                current = current->prev;
-                i++;
-            }
-            return current->data;
-        } else {
-            ListNode<Type> *current = head;
-            while (i != index) {
-                current = current->next;
-                i++;
-            }
-            return current->data;
+    void push_front(Type value) {
+        ListNode<Type> *node = new ListNode<Type>(value);
+        if (size == 0) head = tail = node;
+        else {
+            node->next = head;
+            head->prev = node;
+            head = node;
         }
+        size++;
+    }
+
+    Type &operator[](const int index) {
+        return getObject(index);
+    }
+
+    Type getObject(int index, bool deleteObject = false) {
+        int i = 0;
+        ListNode<Type> *current = getPNode(index);
+        if (deleteObject) {
+            if (current->prev != nullptr) current->prev->next = current->next;
+            else head = current->next;
+
+            if (current->next != nullptr) current->next->prev = current->prev;
+            else tail = current->prev;
+
+            Type copiedData = Type(current->data);
+            delete current;
+            size--;
+            return copiedData;
+        }
+        return current->data;
+    }
+
+    void insert(const int index, Type data) {
+        ListNode<Type> *newNode = new ListNode<Type>(data);
+        if (index == 0) {
+            head->prev = newNode;
+            newNode->next = head;
+            head = newNode;
+        } else if (index == size) {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
+        } else if (0 < index < size) {
+            ListNode<Type> *oldNode = getPNode(index);
+            oldNode->prev->next = newNode;
+            newNode->prev = oldNode->prev;
+            newNode->next = oldNode;
+            oldNode->prev = newNode;
+        } else {
+            // Ошибка
+        }
+        size++;
     }
 
     void print(bool reversed = false) const {
@@ -84,12 +140,12 @@ public:
 int main() {
     List<int> list;
     list.push_back(0);
-    list.push_back(4);
+    list.push_front(4);
     list.push_back(-9);
-    cout << list.getSize() << endl;
     list.push_back(11);
-    cout << list[3] << endl;
+    cout << list.getObject(3, true) << endl;
     list.print();
-    list.print(true);
+    list.insert(2, 10);
+    list.print();
     return 0;
 }
