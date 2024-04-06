@@ -208,6 +208,7 @@ double bar(int n) {
     for (int i = n / 2; i < n; i++) triangles->push_back(new RightTriangle());
     double acc = 0;
     for (triangles->first(); !triangles->eol(); triangles->next()) acc += triangles->get_current()->perimeter();
+    delete triangles;
     return acc;
 }
 
