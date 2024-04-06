@@ -166,7 +166,7 @@ public:
         //printf("~Triangle()\n");
     }
 
-    double perimeter() {
+    virtual double perimeter() {
         return a + b + c;
     }
 
