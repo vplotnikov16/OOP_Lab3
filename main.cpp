@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 
 using namespace std;
 
@@ -9,11 +10,7 @@ public:
     ListNode<Type> *prev;
     Type data;
 
-    ListNode(Type data) {
-        this->data = data;
-        next = nullptr;
-        prev = nullptr;
-    }
+    ListNode(Type data) : data(data), next(nullptr), prev(nullptr) {}
 };
 
 template<typename Type>
@@ -21,157 +18,236 @@ class List {
 private:
     ListNode<Type> *head;
     ListNode<Type> *tail;
-    int size;
-
-    ListNode<Type> *getPNode(const int index) {
-        int i = 0;
-        if (index < 0 || index >= size) throw std::out_of_range("Index out of range");
-        ListNode<Type> *current = nullptr;
-        if (index > size / 2) {
-            current = tail;
-            while (i != size - index - 1) {
-                current = current->prev;
-                i++;
-            }
-        } else {
-            current = head;
-            while (i != index) {
-                current = current->next;
-                i++;
-            }
-        }
-        return current;
-    }
+    ListNode<Type> *current;
+    int _size;
 
 public:
     List() {
         head = nullptr;
         tail = nullptr;
-        size = 0;
-    };
+        current = nullptr;
+        _size = 0;
+    }
 
     ~List() {
-        while (head != nullptr) {
-            ListNode<Type> *temp = head;
-            head = head->next;
-            delete temp;
-        }
+        clear();
     }
 
-    int getSize() {
-        return size;
-    }
-
-    void push_back(Type value) {
-        ListNode<Type> *node = new ListNode<Type>(value);
-        if (size == 0) head = tail = node;
-        else {
-            tail->next = node;
-            node->prev = tail;
-            tail = node;
-        }
-        size++;
-    }
-
-    void push_front(Type value) {
-        ListNode<Type> *node = new ListNode<Type>(value);
-        if (size == 0) head = tail = node;
-        else {
+    void push_front(Type element) {
+        ListNode<Type> *node = new ListNode<Type>(element);
+        if (head == nullptr) {
+            head = tail = node;
+        } else {
             node->next = head;
             head->prev = node;
             head = node;
         }
-        size++;
+        _size++;
     }
 
-    void pop_back() {
-        if (tail == nullptr) return;
-
-        ListNode<Type> *temp = tail;
-        tail = tail->prev;
-        if (tail != nullptr)
-            tail->next = nullptr;
-        else
-            head = nullptr;
-        delete temp;
-        size--;
+    void push_back(Type element) {
+        ListNode<Type> *node = new ListNode<Type>(element);
+        if (head == nullptr) {
+            head = tail = node;
+        } else {
+            tail->next = node;
+            node->prev = tail;
+            tail = node;
+        }
+        _size++;
     }
 
     void pop_front() {
         if (head == nullptr) return;
-
         ListNode<Type> *temp = head;
         head = head->next;
-        if (head != nullptr)
-            head->prev = nullptr;
-        else
-            tail = nullptr;
+        if (head != nullptr) head->prev = nullptr;
+        else tail = nullptr;
+        if (current == temp) current = head;
         delete temp;
-        size--;
+        _size--;
     }
 
-    const Type &operator[](const int index) {
-        return getObject(index);
+    void pop_back() {
+        if (tail == nullptr) return;
+        ListNode<Type> *temp = tail;
+        tail = tail->prev;
+        if (tail != nullptr) tail->next = nullptr;
+        else head = nullptr;
+        if (current == temp) current = nullptr;
+        delete temp;
+        _size--;
     }
 
-    Type getObject(int index, bool deleteObject = false) {
-        int i = 0;
-        ListNode<Type> *current = getPNode(index);
-        if (deleteObject) {
-            if (current->prev != nullptr) current->prev->next = current->next;
-            else head = current->next;
+    void first() {
+        current = head;
+    }
 
-            if (current->next != nullptr) current->next->prev = current->prev;
-            else tail = current->prev;
+    void last() {
+        current = tail;
+    }
 
-            Type copiedData = Type(current->data);
-            delete current;
-            size--;
-            return copiedData;
-        }
+    Type get_current() {
+        if (eol()) return Type();
         return current->data;
     }
 
-    void insert(const int index, Type data) {
-        ListNode<Type> *newNode = new ListNode<Type>(data);
-        if (index == 0) {
-            head->prev = newNode;
-            newNode->next = head;
-            head = newNode;
-        } else if (index == size) {
-            tail->next = newNode;
-            newNode->prev = tail;
-            tail = newNode;
-        } else if (0 < index < size) {
-            ListNode<Type> *oldNode = getPNode(index);
-            oldNode->prev->next = newNode;
-            newNode->prev = oldNode->prev;
-            newNode->next = oldNode;
-            oldNode->prev = newNode;
+    void erase() {
+        if (current == nullptr) return;
+        if (current == head) {
+            pop_front();
+        } else if (current == tail) {
+            pop_back();
         } else {
-            // Ошибка
+            current->prev->next = current->next;
+            current->next->prev = current->prev;
+            ListNode<Type> *temp = current;
+            current = current->next;
+            delete temp;
+            _size--;
         }
-        size++;
     }
 
-    void print(bool reversed = false) const {
-        if (!reversed) {
-            ListNode<Type> *current = head;
-            while (current != nullptr) {
-                std::cout << current->data << " ";
-                current = current->next;
-            }
+    void insert(Type element) {
+        ListNode<Type> *node = new ListNode<Type>(element);
+        if (current == nullptr) { // If inserting when current is beyond the end
+            push_back(element);
         } else {
-            ListNode<Type> *current = tail;
-            while (current != nullptr) {
-                cout << current->data << " ";
-                current = current->prev;
-            }
+            node->next = current;
+            node->prev = current->prev;
+            if (current->prev != nullptr) current->prev->next = node;
+            current->prev = node;
+            if (current == head) head = node;
+            _size++;
         }
-        std::cout << std::endl;
+    }
+
+    void clear() {
+        while (head != nullptr) {
+            pop_front();
+        }
+        current = nullptr;
+    }
+
+    bool eol() {
+        return current == nullptr;
+    }
+
+    int size() {
+        return _size;
+    }
+
+    void next() {
+        if (current != nullptr) current = current->next;
+    }
+
+    void prev() {
+        if (current != nullptr && current->prev != nullptr) current = current->prev;
     }
 };
 
+
+class Triangle {
+protected:
+    double a, b, c;
+public:
+    Triangle() {
+        //printf("Triangle()\n");
+        a = 3, b = 4, c = 5;
+    }
+
+    Triangle(double a, double b, double c) {
+        this->a = a;
+        this->b = b;
+        this->c = c;
+    }
+
+    ~Triangle() {
+        //printf("~Triangle()\n");
+    }
+
+    double perimeter() {
+        return a + b + c;
+    }
+
+};
+
+class RightTriangle : public Triangle {
+public:
+    RightTriangle() {
+        //printf("RightTriangle()\n");
+        a = b = c = 3;
+    }
+
+    RightTriangle(double a) {
+        //printf("RightTriangle(double a)\n");
+        this->a = a;
+        this->b = a;
+        this->c = a;
+    }
+
+    ~RightTriangle() {
+        //printf("~RightTriangle()\n");
+    }
+
+    double perimeter() {
+        return 3 * a;
+    }
+};
+
+void foo(int n) {
+    List<Triangle *> *triangles = new List<Triangle *>;
+    for (int i = 0; i < n / 2; i++) triangles->push_back(new Triangle());
+    for (int i = n / 2; i < n; i++) triangles->push_back(new RightTriangle());
+    delete triangles;
+}
+
+double bar(int n) {
+    List<Triangle *> *triangles = new List<Triangle *>;
+    for (int i = 0; i < n / 2; i++) triangles->push_back(new Triangle());
+    for (int i = n / 2; i < n; i++) triangles->push_back(new RightTriangle());
+    double acc = 0;
+    for (triangles->first(); !triangles->eol(); triangles->next()) acc += triangles->get_current()->perimeter();
+    return acc;
+}
+
 int main() {
+    auto start = chrono::high_resolution_clock::now();
+    foo(100);
+    auto finish = chrono::high_resolution_clock::now();
+    chrono::duration<double> delta = finish - start;
+    printf("(foo 100): %f\n", delta.count());
+
+    start = chrono::high_resolution_clock::now();
+    foo(1000);
+    finish = chrono::high_resolution_clock::now();
+    delta = finish - start;
+    printf("(foo 1000): %f\n", delta.count());
+
+    start = chrono::high_resolution_clock::now();
+    foo(10000);
+    finish = chrono::high_resolution_clock::now();
+    delta = finish - start;
+    printf("(foo 10000): %f\n\n", delta.count());
+
+
+    start = chrono::high_resolution_clock::now();
+    double acc = bar(100);
+    finish = chrono::high_resolution_clock::now();
+    delta = finish - start;
+    printf("(bar 100) {acc = %f}: %f\n", acc, delta.count());
+
+    start = chrono::high_resolution_clock::now();
+    acc = bar(1000);
+    finish = chrono::high_resolution_clock::now();
+    delta = finish - start;
+    printf("(bar 1000) {acc = %f}: %f\n", acc, delta.count());
+
+    start = chrono::high_resolution_clock::now();
+    acc = bar(10000);
+    finish = chrono::high_resolution_clock::now();
+    delta = finish - start;
+    printf("(bar 10000) {acc = %f}: %f\n", acc, delta.count());
+
     return 0;
 }
